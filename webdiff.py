@@ -7,7 +7,7 @@ import smtplib
 
 target_url = 'https://www.timeanddate.com/worldclock/?'
 target_label = 'HDTGM'
-name_data = ' '
+name_data = '  '
 
 n = 0
 while 1 > 0:

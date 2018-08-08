@@ -1,0 +1,7 @@
+{
+	"email": "user@gmail.com",
+	"pw": "password",
+	"recipient": "recipient@email.com",
+	"target_url": "http://www.example.com/",
+	"target_label": "Example Label"
+}

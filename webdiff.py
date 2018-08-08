@@ -4,10 +4,26 @@ import requests
 import time
 import json
 import smtplib
+import json
 
-target_url = 'https://www.timeanddate.com/worldclock/?'
-target_label = 'HDTGM'
-name_data = '  '
+email = None
+pw = None
+recipient = None
+target_url = None
+target_label = None
+
+with open('config.json') as json_file:  
+    data = json.load(json_file)
+
+    email = data['email']
+    pw = data['pw']
+    recipient = data['recipient']
+    target_url = data['target_url']
+    target_label = data['target_label']
+
+
+
+compare_to = None
 
 n = 0
 while 1 > 0:
@@ -16,13 +32,13 @@ while 1 > 0:
         soup = BeautifulSoup(r.text, 'html.parser')
         tmp = (soup.getText())
         #print tmp
-        if name_data != tmp and n != 0:
+        if compare_to != tmp and n != 0:
             #send email
-            gmail_user = 'user@gmail.com'  
-            gmail_password = 'password'
+            gmail_user = email 
+            gmail_password = pw
 
             sent_from = gmail_user  
-            to = ['christopher.barrett.sims@gmail.com']  
+            to = ['chris@selfcare.info']  
             subject = 'diff found in %s' % target_label
             body = target_url
             message = 'Subject: {}\n\n{}'.format(subject, body)
@@ -40,7 +56,7 @@ while 1 > 0:
                 traceback.print_exc()
 
         else:
-            name_data = tmp
+            compare_to = tmp
             print('no diff')
         #sleep in seconds
         n = 1

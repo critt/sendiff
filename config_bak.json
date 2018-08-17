@@ -1,7 +1,15 @@
 {
-	"email": "user@gmail.com",
-	"pw": "password",
-	"recipient": "recipient@email.com",
-	"target_url": "http://www.example.com/",
-	"target_label": "Example Label"
+	"sender_username": "gmailusername",
+	"sender_pw": "gmailpassword",
+	"targets": [{
+			"recipient": "recipient1@email.com",
+			"target_url": "https://www.timeanddate.com/worldclock/new-zealand/auckland",
+			"target_label": "Auckland Clock"
+		},
+		{
+			"recipient": "recipient2@email.com",
+			"target_url": "https://www.timeanddate.com/worldclock/australia/brisbane",
+			"target_label": "Brisbane Clock"
+		}
+	]
 }

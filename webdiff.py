@@ -3,8 +3,8 @@ from bs4 import BeautifulSoup
 import requests
 import time
 import json
-import smtplib
 import json
+import yagmail
 
 email = None
 pw = None
@@ -40,15 +40,10 @@ while 1 > 0:
             to = [recipient]  
             subject = 'diff found in %s' % target_label
             body = target_url
-            message = 'Subject: {}\n\n{}'.format(subject, body)
 
             try:  
-                server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-                server.ehlo()
-                server.login(gmail_user, gmail_password)
-                server.sendmail(sent_from, to, message)
-                server.close()
-
+                yag = yagmail.SMTP(email, pw)
+                yag.send(to = recipient, subject = subject, contents = body)
                 print('Email sent!')
             except Exception as e:  
                 print('email error: %s' % e)

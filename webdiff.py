@@ -35,7 +35,6 @@ def send(recipient, subject, body, sender, pw):
 
 
 def fullTextDiffThread(sender, pw, recipient, target_url, target_label):
-    print(recipient)
     before = None
     n = 0
     while 1 > 0:
@@ -62,10 +61,7 @@ def fullTextDiffThread(sender, pw, recipient, target_url, target_label):
 
 def main(u_config):
     for target in u_config.targets:
-        m_recipient = target.recipient
-        m_target_url = target.target_url
-        m_target_label = target.target_label
-        fullTextDiffThread(u_config.sender_username, u_config.sender_pw, m_recipient, m_target_url, m_target_label) # noqa E501
+        fullTextDiffThread(u_config.sender_username, u_config.sender_pw, target.recipient, target.target_url, target.target_label) # noqa E501
 
 
 u_config = Userconfig()

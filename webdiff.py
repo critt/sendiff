@@ -22,7 +22,6 @@ with open('config.json') as json_file:
     target_label = data['target_label']
 
 
-
 compare_to = None
 
 n = 0
@@ -38,7 +37,7 @@ while 1 > 0:
             gmail_password = pw
 
             sent_from = gmail_user  
-            to = ['chris@selfcare.info']  
+            to = [recipient]  
             subject = 'diff found in %s' % target_label
             body = target_url
             message = 'Subject: {}\n\n{}'.format(subject, body)

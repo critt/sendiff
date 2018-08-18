@@ -3,6 +3,10 @@ import requests
 import time
 import yagmail
 import json
+import threading
+from queue import Queue
+
+print_lock = threading.Lock()
 
 
 class Target:
@@ -28,41 +32,50 @@ def send(recipient, subject, body, sender, pw):
     try:
         yag = yagmail.SMTP(sender, pw)
         yag.send(to=recipient, subject=subject, contents=body)
-        print('Email sent!')
+        with print_lock:
+            print('%s Email sent!' % subject)
     except Exception as e:
-        print('email error: %s' % e)
-        e.print_exc()
+        with print_lock:
+            print('email error: %s' % e)
 
 
-def fullTextDiffThread(sender, pw, recipient, target_url, target_label):
+def fullTextDiff(sender, pw, recipient, target_url, target_label):
     before = None
-    n = 0
-    while 1 > 0:
-        print(n)
+    should_diff = False
+    while True:
         r = requests.get(target_url)
         soup = BeautifulSoup(r.text, 'html.parser')
         after = (soup.getText())
 
-        if n != 0 and before != after:
-
+        if should_diff and before != after:
             subject = 'diff found in %s' % target_label
             body = target_url
-
             send(recipient, subject, body, sender, pw)
 
         else:
             before = after
-            print('no diff')
+            with print_lock:
+                print('%s no diff' % target_label)
 
-        # sleep in seconds
-        n = 1
+        should_diff = True
         time.sleep(20)
 
 
-def main(u_config):
-    for target in u_config.targets:
-        fullTextDiffThread(u_config.sender_username, u_config.sender_pw, target.recipient, target.target_url, target.target_label) # noqa E501
+def thread_queue():
+    while True:
+        current_target = target_queue.get()
+        fullTextDiff(u_config.sender_username, u_config.sender_pw, current_target.recipient, current_target.target_url, current_target.target_label) # noqa E501
+        target_queue.task_done()
 
 
 u_config = Userconfig()
-main(u_config)
+
+target_queue = Queue()
+
+for target in u_config.targets:
+    t = threading.Thread(target=thread_queue)
+    t.daemon = True
+    t.start()
+    target_queue.put(target)
+
+target_queue.join()

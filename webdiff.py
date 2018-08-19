@@ -53,7 +53,7 @@ def send_email(email):
 def full_text_diff(recipient, target_url, target_label, interval):
     before = None
     should_diff = False
-    for n in range(0, 3):
+    while True:
         r = requests.get(target_url)
         soup = BeautifulSoup(r.text, 'html.parser')
         after = (soup.getText())
@@ -95,14 +95,14 @@ request_queue = Queue()
 email_queue = Queue()
 
 for target in u_config.targets:
-    t = threading.Thread(target=process_request)
-    t.daemon = True
-    t.start()
+    target_thread = threading.Thread(target=process_request)
+    target_thread.daemon = True
+    target_thread.start()
     request_queue.put(target)
 
-t = threading.Thread(target=process_email)
-t.daemon = True
-t.start()
+email_thread = threading.Thread(target=process_email)
+email_thread.daemon = True
+email_thread.start()
 
 request_queue.join()
 email_queue.join()

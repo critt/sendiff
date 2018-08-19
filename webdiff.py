@@ -37,7 +37,7 @@ class Email:
         self.body = body
 
 
-def send(email):
+def send_email(email):
     with print_lock:
         print('%s sending' % email.subject)
     try:
@@ -50,7 +50,7 @@ def send(email):
             print('email error: %s' % e)
 
 
-def fullTextDiff(recipient, target_url, target_label, interval):
+def full_text_diff(recipient, target_url, target_label, interval):
     before = None
     should_diff = False
     for n in range(0, 3):
@@ -65,8 +65,7 @@ def fullTextDiff(recipient, target_url, target_label, interval):
 
             subject = 'diff found in %s' % target_label
             body = target_url
-            # send(Email(recipient, subject, body))
-            send_queue.put(Email(recipient, subject, body))
+            email_queue.put(Email(recipient, subject, body))
 
         else:
             before = after
@@ -77,35 +76,33 @@ def fullTextDiff(recipient, target_url, target_label, interval):
         time.sleep(math.ceil(float(interval) * 60))
 
 
-def request_queue():
+def process_request():
     while True:
-        current_target = scan_queue.get()
-        fullTextDiff(current_target.recipient, current_target.target_url, current_target.target_label, current_target.interval) # noqa E501
-        scan_queue.task_done()
+        current_target = request_queue.get()
+        full_text_diff(current_target.recipient, current_target.target_url, current_target.target_label, current_target.interval) # noqa E501
+        request_queue.task_done()
 
 
-def email_queue():
+def process_email():
     while True:
-        current_email = send_queue.get()
-        send(current_email)
-        send_queue.task_done()
+        current_email = email_queue.get()
+        send_email(current_email)
+        email_queue.task_done()
 
 
 u_config = Userconfig()
-
-scan_queue = Queue()
-send_queue = Queue()
+request_queue = Queue()
+email_queue = Queue()
 
 for target in u_config.targets:
-    t = threading.Thread(target=request_queue)
+    t = threading.Thread(target=process_request)
     t.daemon = True
     t.start()
-    scan_queue.put(target)
+    request_queue.put(target)
 
-
-t = threading.Thread(target=email_queue)
+t = threading.Thread(target=process_email)
 t.daemon = True
 t.start()
 
-scan_queue.join()
-send_queue.join()
+request_queue.join()
+email_queue.join()

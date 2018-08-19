@@ -4,12 +4,14 @@
 	"targets": [{
 			"recipient": "recipient1@email.com",
 			"target_url": "https://www.timeanddate.com/worldclock/new-zealand/auckland",
-			"target_label": "Auckland Clock"
+			"target_label": "Auckland Clock",
+			"interval": 1
 		},
 		{
 			"recipient": "recipient2@email.com",
 			"target_url": "https://www.timeanddate.com/worldclock/australia/brisbane",
-			"target_label": "Brisbane Clock"
+			"target_label": "Brisbane Clock",
+			"interval": 1
 		}
 	]
 }

@@ -10,10 +10,11 @@ print_lock = threading.Lock()
 
 
 class Target:
-    def __init__(self, recipient, target_url, target_label):
+    def __init__(self, recipient, target_url, target_label, interval):
         self.recipient = recipient
         self.target_url = target_url
         self.target_label = target_label
+        self.interval = interval
 
 
 class Userconfig:
@@ -39,7 +40,7 @@ def send(recipient, subject, body, sender, pw):
             print('email error: %s' % e)
 
 
-def fullTextDiff(sender, pw, recipient, target_url, target_label):
+def fullTextDiff(sender, pw, recipient, target_url, target_label, interval):
     before = None
     should_diff = False
     while True:
@@ -58,13 +59,13 @@ def fullTextDiff(sender, pw, recipient, target_url, target_label):
                 print('%s no diff' % target_label)
 
         should_diff = True
-        time.sleep(20)
+        time.sleep(interval * 60)
 
 
 def thread_queue():
     while True:
         current_target = target_queue.get()
-        fullTextDiff(u_config.sender_username, u_config.sender_pw, current_target.recipient, current_target.target_url, current_target.target_label) # noqa E501
+        fullTextDiff(u_config.sender_username, u_config.sender_pw, current_target.recipient, current_target.target_url, current_target.target_label, current_target.interval) # noqa E501
         target_queue.task_done()
 
 

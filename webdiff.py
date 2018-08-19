@@ -4,6 +4,7 @@ import time
 import yagmail
 import json
 import threading
+import math
 from queue import Queue
 
 print_lock = threading.Lock()
@@ -59,7 +60,7 @@ def fullTextDiff(sender, pw, recipient, target_url, target_label, interval):
                 print('%s no diff' % target_label)
 
         should_diff = True
-        time.sleep(interval * 60)
+        time.sleep(math.ceil(float(interval) * 60))
 
 
 def thread_queue():

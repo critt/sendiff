@@ -66,8 +66,9 @@ def send_email(email):
 
 def request_loop(target):
     diff_full_text = DiffFullText()
+    headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/68.0.3440.106 Chrome/68.0.3440.106 Safari/537.36'}  # noqa E501
     while True:
-        r = requests.get(target.target_url)
+        r = requests.get(target.target_url, headers=headers)
         is_diff = diff_full_text.diff(r)
 
         if is_diff:

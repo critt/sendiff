@@ -5,13 +5,13 @@
 			"recipient": "recipient1@email.com",
 			"target_url": "https://www.timeanddate.com/worldclock/new-zealand/auckland",
 			"target_label": "Auckland Clock",
-			"interval": ".25"
+			"interval_mins": ".25"
 		},
 		{
 			"recipient": "recipient2@email.com",
 			"target_url": "https://www.timeanddate.com/worldclock/australia/brisbane",
 			"target_label": "Brisbane Clock",
-			"interval": "4"
+			"interval_mins": "4"
 		}
 	]
 }

@@ -23,11 +23,11 @@ class Userconfig:
 
 
 class Target:
-    def __init__(self, recipient, target_url, target_label, interval):
+    def __init__(self, recipient, target_url, target_label, interval_mins):
         self.recipient = recipient
         self.target_url = target_url
         self.target_label = target_label
-        self.interval = interval
+        self.interval = interval_mins
 
 
 class Email:
@@ -35,6 +35,20 @@ class Email:
         self.recipient = recipient
         self.subject = subject
         self.body = body
+
+
+class DiffFullText:
+    def __init__(self):
+        self.text_before = None
+
+    def diff(self, request_now):
+        soup = BeautifulSoup(request_now.text, 'html.parser')
+        text_now = (soup.getText())
+        if self.text_before is not None and self.text_before != text_now:
+            self.text_before = text_now
+            return True
+        self.text_before = text_now
+        return False
 
 
 def send_email(email):
@@ -50,36 +64,30 @@ def send_email(email):
             print('email error: %s' % e)
 
 
-def full_text_diff(recipient, target_url, target_label, interval):
-    before = None
-    should_diff = False
+def request_loop(target):
+    diff_full_text = DiffFullText()
     while True:
-        r = requests.get(target_url)
-        soup = BeautifulSoup(r.text, 'html.parser')
-        after = (soup.getText())
+        r = requests.get(target.target_url)
+        is_diff = diff_full_text.diff(r)
 
-        if should_diff and before != after:
-
+        if is_diff:
             with print_lock:
-                print('%s diff found' % target_label)
+                print('%s diff found' % target.target_label)
 
-            subject = 'diff found in %s' % target_label
-            body = target_url
-            email_queue.put(Email(recipient, subject, body))
+            subject = 'diff found in %s' % target.target_label
+            body = target.target_url
+            email_queue.put(Email(target.recipient, subject, body))
 
         else:
-            before = after
             with print_lock:
-                print('%s no diff' % target_label)
+                print('%s no diff' % target.target_label)
 
-        should_diff = True
-        time.sleep(math.ceil(float(interval) * 60))
+        time.sleep(math.ceil(float(target.interval) * 60))
 
 
 def process_request():
     while True:
-        current_target = request_queue.get()
-        full_text_diff(current_target.recipient, current_target.target_url, current_target.target_label, current_target.interval) # noqa E501
+        request_loop(request_queue.get())
         request_queue.task_done()
 
 

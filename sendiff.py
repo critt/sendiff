@@ -1,11 +1,11 @@
 from bs4 import BeautifulSoup
-import requests
 import time
 import yagmail
 import json
 import threading
 import math
 from queue import Queue
+from selenium import webdriver
 
 print_lock = threading.Lock()
 
@@ -42,7 +42,7 @@ class DiffFullText:
         self.text_before = None
 
     def diff(self, request_now):
-        soup = BeautifulSoup(request_now.text, 'html.parser')
+        soup = BeautifulSoup(request_now, 'lxml')
         text_now = (soup.getText())
         if self.text_before is not None and self.text_before != text_now:
             self.text_before = text_now
@@ -66,10 +66,11 @@ def send_email(email):
 
 def request_loop(target):
     diff_full_text = DiffFullText()
-    headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/68.0.3440.106 Chrome/68.0.3440.106 Safari/537.36'}  # noqa E501
     while True:
-        r = requests.get(target.target_url, headers=headers)
-        is_diff = diff_full_text.diff(r)
+        driver = webdriver.Chrome()
+        driver.implicitly_wait(30)
+        driver.get(target.target_url)
+        is_diff = diff_full_text.diff(driver.page_source)
 
         if is_diff:
             with print_lock:

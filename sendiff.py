@@ -41,6 +41,14 @@ class Email:
         self.body = body
 
 
+class Result:
+    def __init__(self, is_diff, obj_before, obj_after, message):
+        this.is_diff = is_diff
+        this.obj_before = obj_before
+        this.obj_after = obj_after
+        this.message - message
+
+
 class DiffFullText:
     def __init__(self):
         self.text_before = None
@@ -82,14 +90,6 @@ class DiffXPath:
             return Result(True, tmp_text_before, text_now, 'XPath diff found')
         self.text_before = text_now
         return Result(False, none, none, none)
-
-
-class Result:
-    def __init__(self, is_diff, obj_before, obj_after, message):
-        this.is_diff = is_diff
-        this.obj_before = obj_before
-        this.obj_after = obj_after
-        this.message - message
 
 
 def send_email(email):

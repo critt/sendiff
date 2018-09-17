@@ -9,6 +9,7 @@ from selenium import webdriver
 
 print_lock = threading.Lock()
 
+str_none = 'none'
 
 class Userconfig:
     def __init__(self):
@@ -23,10 +24,13 @@ class Userconfig:
 
 
 class Target:
-    def __init__(self, recipient, target_url, target_label, interval_mins):
+    def __init__(self, recipient, target_url, target_label, full_text, css_selector, xpath, interval_mins):
         self.recipient = recipient
         self.target_url = target_url
         self.target_label = target_label
+        self.full_text = full_text
+        self.css_selector = css_selector
+        self.xpath = xpath
         self.interval = interval_mins
 
 
@@ -41,14 +45,51 @@ class DiffFullText:
     def __init__(self):
         self.text_before = None
 
-    def diff(self, request_now):
-        soup = BeautifulSoup(request_now, 'lxml')
+    def diff(self, driver):
+        soup = BeautifulSoup(driver.page_source)
         text_now = (soup.getText())
         if self.text_before is not None and self.text_before != text_now:
+            tmp_text_before = self.text_before
             self.text_before = text_now
-            return True
+            return Result(True, tmp_text_before, text_now, 'Full text diff found')
         self.text_before = text_now
-        return False
+        return Result(False, none, none, none)
+
+
+class DiffCSSSelector:
+    def __init__(self):
+        self.text_before = None
+
+    def diff(self, driver, css_selector):
+        text_now = driver.find_element_by_css_selector(css_selector)
+        if self.text_before is not None and self.text_before != text_now:
+            tmp_text_before = self.text_before
+            self.text_before = text_now
+            return Result(True, tmp_text_before, text_now, 'CSS selector diff found')
+        self.text_before = text_now
+        return Result(False, none, none, none)
+
+        
+class DiffXPath:
+    def __init__(self):
+        self.text_before = None
+
+    def diff(self, driver, xpath):
+        text_now = driver.find_element_by_xpath(xpath)
+        if self.text_before is not None and self.text_before != text_now:
+            tmp_text_before = self.text_before
+            self.text_before = text_now
+            return Result(True, tmp_text_before, text_now, 'XPath diff found')
+        self.text_before = text_now
+        return Result(False, none, none, none)
+
+
+class Result:
+    def __init__(self, is_diff, obj_before, obj_after, message):
+        this.is_diff = is_diff
+        this.obj_before = obj_before
+        this.obj_after = obj_after
+        this.message - message
 
 
 def send_email(email):
@@ -66,18 +107,44 @@ def send_email(email):
 
 def request_loop(target):
     diff_full_text = DiffFullText()
+    diff_css_selector = DiffCSSSelector()
+    diff_xpath = DiffXPath()
+
+    results = []
+
     while True:
+        diff_found = False
+
         driver = webdriver.Chrome()
         driver.implicitly_wait(30)
         driver.get(target.target_url)
-        is_diff = diff_full_text.diff(driver.page_source)
 
-        if is_diff:
+        if(target.full_text):
+            result = diff_full_text.diff(driver)
+            if(result.is_diff):
+                results.add(result)
+            diff_found = True
+
+        if(target.css_selector is not str_none):
+            rssult = diff_css_selector.diff(driver, target.css_selector)
+            if(result.is_diff):
+                results.add(result)
+            diff_found = True
+
+        if(target.xpath is not str_none):
+            result = diff_xpath.diff(driver, target.xpath)
+            if(result.is_diff):
+                results.add(result)
+            diff_found = True
+
+        if diff_found:
             with print_lock:
                 print('%s diff found' % target.target_label)
 
             subject = 'diff found in %s' % target.target_label
-            body = target.target_url
+            body
+            for result in results:
+                body = body + result.message + '\n'
             email_queue.put(Email(target.recipient, subject, body))
 
         else:

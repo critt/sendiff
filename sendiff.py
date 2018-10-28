@@ -69,7 +69,12 @@ class DiffCSSSelector:
         self.text_before = None
 
     def diff(self, driver, css_selector):
-        obj_now = driver.find_element_by_css_selector(css_selector)
+        try:
+            obj_now = driver.find_element_by_css_selector(css_selector)
+        except Exception as e:
+            print('css_selector: unable to find element')
+            return Result(False, None, None, None)
+
         text_now = obj_now.text
         print('DiffCSSSelector, text_now=%s' % text_now)
         if self.text_before is not None and self.text_before != text_now:
@@ -85,7 +90,12 @@ class DiffXPath:
         self.text_before = None
 
     def diff(self, driver, xpath):
-        obj_now = driver.find_element_by_xpath(xpath)
+        try:
+            obj_now = driver.find_element_by_xpath(xpath)
+        except Exception as e:
+            print('xpath: unable to find element')
+            return Result(False, None, None, None)
+
         text_now = obj_now.text
         print('DiffXPath, text_now=%s' % text_now)
         if self.text_before is not None and self.text_before != text_now:

@@ -43,10 +43,10 @@ class Email:
 
 class Result:
     def __init__(self, is_diff, obj_before, obj_after, message):
-        this.is_diff = is_diff
-        this.obj_before = obj_before
-        this.obj_after = obj_after
-        this.message - message
+        self.is_diff = is_diff
+        self.obj_before = obj_before
+        self.obj_after = obj_after
+        self.message = message
 
 
 class DiffFullText:
@@ -61,7 +61,7 @@ class DiffFullText:
             self.text_before = text_now
             return Result(True, tmp_text_before, text_now, 'Full text diff found')
         self.text_before = text_now
-        return Result(False, none, none, none)
+        return Result(False, None, None, None)
 
 
 class DiffCSSSelector:
@@ -69,13 +69,15 @@ class DiffCSSSelector:
         self.text_before = None
 
     def diff(self, driver, css_selector):
-        text_now = driver.find_element_by_css_selector(css_selector)
+        obj_now = driver.find_element_by_css_selector(css_selector)
+        text_now = obj_now.text
+        print('DiffCSSSelector, text_now=%s' % text_now)
         if self.text_before is not None and self.text_before != text_now:
             tmp_text_before = self.text_before
             self.text_before = text_now
             return Result(True, tmp_text_before, text_now, 'CSS selector diff found')
         self.text_before = text_now
-        return Result(False, none, none, none)
+        return Result(False, None, None, None)
 
         
 class DiffXPath:
@@ -83,13 +85,15 @@ class DiffXPath:
         self.text_before = None
 
     def diff(self, driver, xpath):
-        text_now = driver.find_element_by_xpath(xpath)
+        obj_now = driver.find_element_by_xpath(xpath)
+        text_now = obj_now.text
+        print('DiffXPath, text_now=%s' % text_now)
         if self.text_before is not None and self.text_before != text_now:
             tmp_text_before = self.text_before
             self.text_before = text_now
             return Result(True, tmp_text_before, text_now, 'XPath diff found')
         self.text_before = text_now
-        return Result(False, none, none, none)
+        return Result(False, None, None, None)
 
 
 def send_email(email):
@@ -122,30 +126,31 @@ def request_loop(target):
         if(target.full_text):
             result = diff_full_text.diff(driver)
             if(result.is_diff):
-                results.add(result)
-            diff_found = True
+                results.append(result)
+                diff_found = True
 
         if(target.css_selector is not str_none):
-            rssult = diff_css_selector.diff(driver, target.css_selector)
+            result = diff_css_selector.diff(driver, target.css_selector)
             if(result.is_diff):
-                results.add(result)
-            diff_found = True
+                results.append(result)
+                diff_found = True
 
         if(target.xpath is not str_none):
             result = diff_xpath.diff(driver, target.xpath)
             if(result.is_diff):
-                results.add(result)
-            diff_found = True
+                results.append(result)
+                diff_found = True
 
         if diff_found:
             with print_lock:
                 print('%s diff found' % target.target_label)
 
             subject = 'diff found in %s' % target.target_label
-            body
+            body = ''
             for result in results:
-                body = body + result.message + '\n'
+                body = body + result.message + '\n' + 'before:\n\t%s\n' % result.obj_before + 'after:\n\t%s\n' % result.obj_after + '\n'
             email_queue.put(Email(target.recipient, subject, body))
+            print('body=\n%s' % body)
 
         else:
             with print_lock:

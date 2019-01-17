@@ -6,8 +6,8 @@
 			"target_url": "https://www.timeanddate.com/worldclock/new-zealand/auckland",
 			"target_label": "Auckland Clock",
 			"full_text": false,
-			"css_selector": "#yui_3_17_2_1_1537136670308_99",
-			"xpath": "//*[@id=\"yui_3_17_2_1_1537136670308_99\"]",
+			"css_selector": "#ct",
+			"xpath": "//*[@id=\"ct\"]",
 			"interval_mins": "60"
 		},
 		{

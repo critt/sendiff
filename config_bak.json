@@ -8,7 +8,8 @@
 			"full_text": false,
 			"css_selector": "#ct",
 			"xpath": "//*[@id=\"ct\"]",
-			"interval_mins": "60"
+			"interval_mins": "60",
+			"enabled": true
 		},
 		{
 			"recipient": "recipient2@email.com",
@@ -17,7 +18,8 @@
 			"full_text": true,
 			"css_selector": "none",
 			"xpath": "none",
-			"interval_mins": "4.5"
+			"interval_mins": "4.5",
+			"enabled": false
 		}
 	]
 }

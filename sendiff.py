@@ -22,7 +22,7 @@ class Userconfig:
 
 
 class Target:
-    def __init__(self, recipient, target_url, target_label, full_text, css_selector, xpath, interval_mins):
+    def __init__(self, recipient, target_url, target_label, full_text, css_selector, xpath, interval_mins, enabled):
         self.recipient = recipient
         self.target_url = target_url
         self.target_label = target_label
@@ -30,6 +30,7 @@ class Target:
         self.css_selector = css_selector
         self.xpath = xpath
         self.interval = interval_mins
+        self.enabled = enabled
 
 
 class Email:
@@ -226,28 +227,32 @@ def parse_args(argv):
     main()
 
 
-
 def test(idx):
     target = u_config.targets[idx]
     request_loop(target, True)
     sys.exit()
 
 
-
 def main():
-    for idx, target in enumerate(u_config.targets):
+    req_thread_count = 0
+    for target in u_config.targets:
+        if target.enabled:
+            req_thread_count += 1
+            print('Adding to queue: %s' % target.target_label)
+            target_thread = threading.Thread(target=process_request)
+            target_thread.daemon = True
+            target_thread.start()
+            request_queue.put(target)
 
-        target_thread = threading.Thread(target=process_request)
-        target_thread.daemon = True
-        target_thread.start()
-        request_queue.put(target)
+    print('Request thread count: %s' % req_thread_count)
 
-    email_thread = threading.Thread(target=process_email)
-    email_thread.daemon = True
-    email_thread.start()
+    if req_thread_count > 0:
+        email_thread = threading.Thread(target=process_email)
+        email_thread.daemon = True
+        email_thread.start()
 
-    request_queue.join()
-    email_queue.join()
+        request_queue.join()
+        email_queue.join()
 
 
 if __name__ == "__main__":

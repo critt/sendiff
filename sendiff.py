@@ -129,7 +129,7 @@ def send_email(email):
             print('email error: %s' % e)
 
 
-def request_loop(target, is_test, driver):
+def request_loop(target, is_test):
     diff_full_text = DiffFullText()
     diff_css_selector = DiffCSSSelector()
     diff_xpath = DiffXPath()
@@ -138,54 +138,54 @@ def request_loop(target, is_test, driver):
 
     keep_going = True
 
-    if(driver is None):
+    if is_test:
+        driver = webdriver.Chrome()
+    else:
         options = Options()
         options.headless = True
         driver = webdriver.Chrome(chrome_options=options)
+    driver.implicitly_wait(30)
 
     while keep_going:
         diff_found = False
-        if is_test:
-            keep_going = False
 
         driver.get(target.target_url)
         if(target.full_text):
             result = diff_full_text.diff(driver)
-            if(result.is_diff):
+            if(result.is_diff and not is_test):
                 results.append(result)
                 diff_found = True
 
         if(target.css_selector is not str_none):
             result = diff_css_selector.diff(driver, target.css_selector)
-            if(result.is_diff):
+            if(result.is_diff and not is_test):
                 results.append(result)
                 diff_found = True
 
         if(target.xpath is not str_none):
             result = diff_xpath.diff(driver, target.xpath)
-            if(result.is_diff):
+            if(result.is_diff and not is_test):
                 results.append(result)
                 diff_found = True
 
-        if diff_found:
-            with print_lock:
-                print('%s diff found' % target.target_label)
+        if is_test:
+            keep_going = False
+        else:
+            if diff_found:
+                with print_lock:
+                    print('%s diff found' % target.target_label)
 
-            subject = 'diff found in %s' % target.target_label
-            body = ''
-            for result in results:
-                body = body + result.message + '\n' + 'before:\n\t%s\n' % result.obj_before + 'after:\n\t%s\n' % result.obj_after + '\n'
+                subject = 'diff found in %s' % target.target_label
+                body = ''
+                for result in results:
+                    body = body + result.message + '\n' + 'before:\n\t%s\n' % result.obj_before + 'after:\n\t%s\n' % result.obj_after + '\n'
 
-            if is_test:
                 with print_lock:
                     print('body=\n%s' % body)
-            else:
                 email_queue.put(Email(target.recipient, subject, body))
-
-
-        else:
-            with print_lock:
-                print('%s no diff' % target.target_label)
+            else:
+                with print_lock:
+                    print('%s no diff' % target.target_label)
 
         if keep_going:
             time.sleep(math.ceil(float(target.interval) * 60))
@@ -193,7 +193,7 @@ def request_loop(target, is_test, driver):
 
 def process_request():
     while True:
-        request_loop(request_queue.get(), False, None)
+        request_loop(request_queue.get(), False)
         request_queue.task_done()
 
 
@@ -221,20 +221,16 @@ def parse_args(argv):
                 print(str_idx_err % (arg, len(u_config.targets), len(u_config.targets) - 1))
                 sys.exit()
             else:
-                driver = webdriver.Chrome()
-                driver.implicitly_wait(30)
-                test(int(arg), driver)
+                test(int(arg))
                 return
-    print('calling main')
     main()
 
 
 
-def test(idx, driver):
+def test(idx):
     target = u_config.targets[idx]
-    request_loop(target, True, driver)
+    request_loop(target, True)
     sys.exit()
-
 
 
 

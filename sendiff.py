@@ -4,12 +4,10 @@ import yagmail
 import json
 import threading
 import math
+import sys, getopt
 from queue import Queue
 from selenium import webdriver
-
-print_lock = threading.Lock()
-
-str_none = 'none'
+from selenium.webdriver.chrome.options import Options
 
 class Userconfig:
     def __init__(self):
@@ -72,7 +70,8 @@ class DiffCSSSelector:
         try:
             obj_now = driver.find_element_by_css_selector(css_selector)
         except Exception as e:
-            print('css_selector: unable to find element')
+            with print_lock:
+                print('css_selector: unable to find element')
             return Result(False, None, None, None)
 
         text_now = obj_now.text
@@ -93,7 +92,8 @@ class DiffXPath:
         try:
             obj_now = driver.find_element_by_xpath(xpath)
         except Exception as e:
-            print('xpath: unable to find element')
+            with print_lock:
+                print('xpath: unable to find element')
             return Result(False, None, None, None)
 
         text_now = obj_now.text
@@ -105,6 +105,16 @@ class DiffXPath:
         self.text_before = text_now
         return Result(False, None, None, None)
 
+u_config = Userconfig()
+request_queue = Queue()
+email_queue = Queue()
+
+str_none = 'none'
+str_usage = 'usage: sindiff.py <option>'
+str_help = '%s\noptions:\n\t-h : help\n\t-t <index of target to test> : test a target without a headless browser' % str_usage
+str_idx_err = 'index %s out of bounds.\nnum targets=%s\nlast index=%s'
+
+print_lock = threading.Lock()
 
 def send_email(email):
     with print_lock:
@@ -119,20 +129,26 @@ def send_email(email):
             print('email error: %s' % e)
 
 
-def request_loop(target):
+def request_loop(target, is_test, driver):
     diff_full_text = DiffFullText()
     diff_css_selector = DiffCSSSelector()
     diff_xpath = DiffXPath()
 
     results = []
 
-    while True:
+    keep_going = True
+
+    if(driver is None):
+        options = Options()
+        options.headless = True
+        driver = webdriver.Chrome(chrome_options=options)
+
+    while keep_going:
         diff_found = False
+        if is_test:
+            keep_going = False
 
-        driver = webdriver.Chrome()
-        driver.implicitly_wait(30)
         driver.get(target.target_url)
-
         if(target.full_text):
             result = diff_full_text.diff(driver)
             if(result.is_diff):
@@ -159,19 +175,25 @@ def request_loop(target):
             body = ''
             for result in results:
                 body = body + result.message + '\n' + 'before:\n\t%s\n' % result.obj_before + 'after:\n\t%s\n' % result.obj_after + '\n'
-            email_queue.put(Email(target.recipient, subject, body))
-            print('body=\n%s' % body)
+
+            if is_test:
+                with print_lock:
+                    print('body=\n%s' % body)
+            else:
+                email_queue.put(Email(target.recipient, subject, body))
+
 
         else:
             with print_lock:
                 print('%s no diff' % target.target_label)
 
-        time.sleep(math.ceil(float(target.interval) * 60))
+        if keep_going:
+            time.sleep(math.ceil(float(target.interval) * 60))
 
 
 def process_request():
     while True:
-        request_loop(request_queue.get())
+        request_loop(request_queue.get(), False, None)
         request_queue.task_done()
 
 
@@ -182,19 +204,55 @@ def process_email():
         email_queue.task_done()
 
 
-u_config = Userconfig()
-request_queue = Queue()
-email_queue = Queue()
+def parse_args(argv):
+    try:
+      opts, args = getopt.getopt(argv,"ht:")
+    except getopt.GetoptError:
+        print(str_usage)
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print(str_help)
+            sys.exit()
+        if opt == '-t':
+            index = arg
+            print('index: %s' % arg)
+            if(int(arg) >= len(u_config.targets)):
+                print(str_idx_err % (arg, len(u_config.targets), len(u_config.targets) - 1))
+                sys.exit()
+            else:
+                driver = webdriver.Chrome()
+                driver.implicitly_wait(30)
+                test(int(arg), driver)
+                return
+    print('calling main')
+    main()
 
-for target in u_config.targets:
-    target_thread = threading.Thread(target=process_request)
-    target_thread.daemon = True
-    target_thread.start()
-    request_queue.put(target)
 
-email_thread = threading.Thread(target=process_email)
-email_thread.daemon = True
-email_thread.start()
 
-request_queue.join()
-email_queue.join()
+def test(idx, driver):
+    target = u_config.targets[idx]
+    request_loop(target, True, driver)
+    sys.exit()
+
+
+
+
+def main():
+    for idx, target in enumerate(u_config.targets):
+
+        target_thread = threading.Thread(target=process_request)
+        target_thread.daemon = True
+        target_thread.start()
+        request_queue.put(target)
+
+    email_thread = threading.Thread(target=process_email)
+    email_thread.daemon = True
+    email_thread.start()
+
+    request_queue.join()
+    email_queue.join()
+
+
+if __name__ == "__main__":
+    parse_args(sys.argv[1:])

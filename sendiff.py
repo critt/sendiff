@@ -4,10 +4,12 @@ import yagmail
 import json
 import threading
 import math
-import sys, getopt
+import sys
+import getopt
 from queue import Queue
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+
 
 class Userconfig:
     def __init__(self):
@@ -70,7 +72,7 @@ class DiffCSSSelector:
     def diff(self, driver, css_selector):
         try:
             obj_now = driver.find_element_by_css_selector(css_selector)
-        except Exception as e:
+        except Exception:
             with print_lock:
                 print('css_selector: unable to find element')
             return Result(False, None, None, None)
@@ -84,7 +86,7 @@ class DiffCSSSelector:
         self.text_before = text_now
         return Result(False, None, None, None)
 
-        
+
 class DiffXPath:
     def __init__(self):
         self.text_before = None
@@ -92,7 +94,7 @@ class DiffXPath:
     def diff(self, driver, xpath):
         try:
             obj_now = driver.find_element_by_xpath(xpath)
-        except Exception as e:
+        except Exception:
             with print_lock:
                 print('xpath: unable to find element')
             return Result(False, None, None, None)
@@ -106,6 +108,7 @@ class DiffXPath:
         self.text_before = text_now
         return Result(False, None, None, None)
 
+
 u_config = Userconfig()
 request_queue = Queue()
 email_queue = Queue()
@@ -117,12 +120,13 @@ str_idx_err = 'index %s out of bounds.\nnum targets=%s\nlast index=%s'
 
 print_lock = threading.Lock()
 
+
 def send_email(email):
     with print_lock:
         print('%s sending' % email.subject)
     try:
         yag = yagmail.SMTP(u_config.sender_username, u_config.sender_pw)
-        yag.send(to=email.recipient, subject=email.subject, contents=email.body) # noqa E501
+        yag.send(to=email.recipient, subject=email.subject, contents=email.body)
         with print_lock:
             print('%s Email sent!' % email.subject)
     except Exception as e:
@@ -207,7 +211,7 @@ def process_email():
 
 def parse_args(argv):
     try:
-      opts, args = getopt.getopt(argv,"ht:")
+        opts, args = getopt.getopt(argv, "ht:")
     except getopt.GetoptError:
         print(str_usage)
         sys.exit(2)
@@ -216,7 +220,6 @@ def parse_args(argv):
             print(str_help)
             sys.exit()
         if opt == '-t':
-            index = arg
             print('index: %s' % arg)
             if(int(arg) >= len(u_config.targets)):
                 print(str_idx_err % (arg, len(u_config.targets), len(u_config.targets) - 1))

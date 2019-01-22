@@ -24,15 +24,24 @@ class Userconfig:
 
 
 class Target:
-    def __init__(self, recipient, target_url, target_label, full_text, css_selector, xpath, interval_mins, enabled):
+    def __init__(self, recipient, target_url, target_label, cookies, full_text, css_selector, xpath, interval_mins, enabled):
         self.recipient = recipient
         self.target_url = target_url
         self.target_label = target_label
+        self.cookies = []
+        for cookie in cookies:
+            self.cookies.append(Cookie(**cookie))
         self.full_text = full_text
         self.css_selector = css_selector
         self.xpath = xpath
         self.interval = interval_mins
         self.enabled = enabled
+
+
+class Cookie:
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
 
 
 class Email:
@@ -135,14 +144,6 @@ def send_email(email):
 
 
 def request_loop(target, is_test):
-    diff_full_text = DiffFullText()
-    diff_css_selector = DiffCSSSelector()
-    diff_xpath = DiffXPath()
-
-    results = []
-
-    keep_going = True
-
     if is_test:
         driver = webdriver.Chrome()
     else:
@@ -150,6 +151,17 @@ def request_loop(target, is_test):
         options.headless = True
         driver = webdriver.Chrome(chrome_options=options)
     driver.implicitly_wait(30)
+    diff_full_text = DiffFullText()
+    diff_css_selector = DiffCSSSelector()
+    diff_xpath = DiffXPath()
+    results = []
+    keep_going = True
+
+    if(len(target.cookies) > 0):
+        driver.get(target.target_url)
+        time.sleep(10)
+        for cookie in target.cookies:
+            driver.add_cookie(json.loads(json.dumps({'name': (cookie.key), 'value': (cookie.value)})))
 
     while keep_going:
         diff_found = False

@@ -5,6 +5,7 @@
 			"recipient": "recipient1@email.com",
 			"target_url": "https://www.timeanddate.com/worldclock/new-zealand/auckland",
 			"target_label": "Auckland Clock",
+			"cookies": [],
 			"full_text": false,
 			"css_selector": "#ct",
 			"xpath": "//*[@id=\"ct\"]",
@@ -15,9 +16,34 @@
 			"recipient": "recipient2@email.com",
 			"target_url": "https://www.timeanddate.com/worldclock/australia/brisbane",
 			"target_label": "Brisbane Clock",
+			"cookies": [],
 			"full_text": true,
 			"css_selector": "none",
 			"xpath": "none",
+			"interval_mins": "4.5",
+			"enabled": false
+		},
+		{
+			"recipient": "recipient3@email.com",
+			"target_url": "https://draft.premierleague.com/team/transactions",
+			"target_label": "FPL Transactions",
+			"cookies": [
+				{
+					"key": "sessionid",
+					"value": "37mj3di6qkuluw92t3x2r6jrip6145ot"
+				},
+				{
+					"key": "pl_profile",
+					"value": "\"eyJzIjogIld6WXNNakE1T0RnME5qQmQ6MWdsa3FFOk5nbm93bEgtSXBZMTYtSlozRy1LYWRLUDMwYyIsICJ1IjogeyJsbiI6ICJzaW1zIiwgImZjIjogbnVsbCwgImlkIjogMjA5ODg0NjAsICJmbiI6ICJjaHJpc3RvcGhlciJ9fQ==\""
+				},
+				{
+					"key": "activeEntry",
+					"value": "43531"
+				}
+			],
+			"full_text": false,
+			"css_selector": "none",
+			"xpath": "//*[@id=\"root\"]/div/div[2]/div/div/div[1]/div/div[2]/div[2]/div[2]/div[1]/div[1]/div/div[2]/div",
 			"interval_mins": "4.5",
 			"enabled": false
 		}
